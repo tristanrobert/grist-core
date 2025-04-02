@@ -78,6 +78,7 @@ import { UserProfile } from 'app/common/LoginSessionAPI';
 import { SendAppPageFunction } from 'app/server/lib/sendAppPage';
 import { StringUnionError } from 'app/common/StringUnion';
 import { EnabledProtection, EnabledProtectionString, ProtectionsManager } from './oidc/Protections';
+import { proxyAgentForTrustedRequests } from 'app/server/lib/ProxyAgent';
 import { SessionObj } from './BrowserSession';
 import { getOriginUrl } from './requestUtils';
 
@@ -180,7 +181,9 @@ export class OIDCConfig {
     this._protectionManager = new ProtectionsManager(enabledProtections);
 
     this._redirectUrl = new URL(CALLBACK_URL, spHost).href;
+    const agent = proxyAgentForTrustedRequests(new URL(issuerUrl));
     custom.setHttpOptionsDefaults({
+      ...(agent !== undefined ? {agent} : {}),
       ...(httpTimeout !== undefined ? {timeout: httpTimeout} : {}),
     });
     await this._initClient({ issuerUrl, clientId, clientSecret, extraMetadata });
